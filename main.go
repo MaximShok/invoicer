@@ -31,6 +31,37 @@ import (
 	"golang.org/x/oauth2"
 )
 
+const defaultUser string = "samantha"
+const defaultPass string = "1ns3cur3"
+
+func getIndex(w http.ResponseWriter, r *http.Request) {
+	if len(r.Header.Get("Authorization")) < 8 ||
+		r.Header.Get("Authorization")[0:5] != `Basic` {
+		requestBasicAuth(w)
+		return
+	}
+
+	authbytes, err := base64.StdEncoding.DecodeString(
+		r.Header.Get("Authorization")[6:])
+	if err != nil {
+		requestBasicAuth(w)
+		return
+	}
+	authstr := fmt.Sprintf("%s", authbytes)
+	username := authstr[0:strings.Index(authstr, ":")]
+	password := authstr[strings.Index(authstr, ":")+1:]
+	if username != defaultUser || password != defaultPass {
+		requestBasicAuth(w)
+		return
+	}
+	// ... ваш оставшийся код функции getIndex ...
+}
+
+func requestBasicAuth(w http.ResponseWriter) {
+	w.Header().Set("WWW-Authenticate", `Basic realm="invoicer"`)
+	w.WriteHeader(401)
+	w.Write([]byte(`please authenticate`))
+}
 func init() {
 	// initialize the logger
 	mozlog.Logger.LoggerName = "invoicer"
